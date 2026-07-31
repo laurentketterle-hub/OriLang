@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build orivm
+        run: |
+          gcc -O2 -o core/orivm core/orivm.c -lm
+
+      - name: Run golden tests (beginner 27-29)
+        run: |
+          python3 scripts/test_golden_27_29.py --orivm core/orivm
+
+      - name: Verify golden files
+        run: |
+          ls -la tests/golden/
+          for f in tests/golden/beginner_27_countdown.txt tests/golden/beginner_28_max_of_three.txt tests/golden/beginner_29_echo_name.txt; do
+            echo "=== $f ==="
+            cat "$f"
+          done
