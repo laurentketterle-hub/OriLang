@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'samples/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'samples/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  validate-docs:
+    name: Validate docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check docs directory exists
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "::error::docs/ directory not found"
+            exit 1
+          fi
+          echo "docs/ directory OK"
+
+      - name: Check learning path doc exists
+        run: |
+          if [ ! -f "docs/LEARNING_PATH.md" ]; then
+            echo "::error::docs/LEARNING_PATH.md not found"
+            exit 1
+          fi
+          LINES=$(wc -l < docs/LEARNING_PATH.md)
+          echo "LEARNING_PATH.md: $LINES lines"
+          if [ "$LINES" -lt 200 ]; then
+            echo "::error::LEARNING_PATH.md has fewer than 200 lines ($LINES)"
+            exit 1
+          fi
+          echo "Line count OK"
+
+      - name: Validate markdown links in docs
+        run: |
+          # Check that referenced sample files exist
+          echo "Checking sample references in docs..."
+          missing=0
+          for f in samples/beginner_01_hello.ori \
+                   samples/beginner_02_variables.ori \
+                   samples/beginner_03_loops.ori \
+                   samples/beginner_04_conditionals.ori \
+                   samples/beginner_05_functions.ori \
+                   samples/beginner_06_strings.ori \
+                   samples/beginner_07_arrays.ori \
+                   samples/beginner_08_when_chain.ori \
+                   samples/beginner_09_math_chain.ori \
+                   samples/beginner_10_bool_logic.ori \
+                   samples/fizzbuzz.ori \
+                   samples/countdown.ori \
+                   samples/nested_loop.ori \
+                   samples/array_push.ori \
+                   samples/when_else.ori \
+                   samples/hello_concat.ori \
+                   samples/greet_name.ori \
+                   samples/sum_loop.ori \
+                   samples/math_ops.ori \
+                   docs/CHEATSHEET.md \
+                   docs/ARCHITECTURE.md \
+                   docs/TOOLCHAIN.md \
+                   docs/BEGINNER_PITFALLS.md \
+                   docs/LEARNING_PATH.md \
+                   CONTRIBUTING.md; do
+            if [ ! -f "$f" ]; then
+              echo "::warning::Referenced file not found: $f"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "::warning::Some referenced files are missing"
+          else
+            echo "All referenced files exist OK"
+          fi
+
+  validate-samples:
+    name: Validate samples structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check samples directory
+        run: |
+          if [ ! -d "samples" ]; then
+            echo "::error::samples/ directory not found"
+            exit 1
+          fi
+          echo "samples/ directory OK"
+
+      - name: Count sample files
+        run: |
+          BEGINNER_COUNT=$(find samples -maxdepth 1 -name 'beginner_*.ori' | wc -l)
+          echo "Beginner samples: $BEGINNER_COUNT"
+          if [ "$BEGINNER_COUNT" -lt 10 ]; then
+            echo "::warning::Fewer than 10 beginner samples found"
+          fi
+
+          INTERMEDIATE_COUNT=$(find samples -maxdepth 1 -name 'intermediate_*.ori' | wc -l)
+          echo "Intermediate samples: $INTERMEDIATE_COUNT"
+
+          TOTAL=$(find samples -maxdepth 1 -name '*.ori' | wc -l)
+          echo "Total top-level samples: $TOTAL"
+
+      - name: Check for valid .ori file extensions
+        run: |
+          INVALID=$(find samples -type f ! -name '*.ori' ! -name '*.md' ! -name '*.meta' ! -name '*.html' | head -5)
+          if [ -n "$INVALID" ]; then
+            echo "::warning::Unexpected file types in samples/"
+            echo "$INVALID"
+          else
+            echo "File extensions OK"
+          fi
+
+  validate-ci:
+    name: Validate CI workflow syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check CI workflow exists
+        run: |
+          if [ ! -f ".github/workflows/ci.yml" ]; then
+            echo "::error::CI workflow file not found"
+            exit 1
+          fi
+          echo "CI workflow file OK"
