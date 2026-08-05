@@ -65,6 +65,7 @@ hold OP_PUSHINT = 31
 // ---- parser/codegen state ----
 hold P_toks = []
 hold P_pos = 0
+hold P_SRC = ""  // source code for error span reporting
 hold C_kinds = []
 hold C_vals = []
 hold C_PARSE_DEPTH = 0
@@ -103,12 +104,12 @@ fold is_space(c) {
 
 hold MAX_TOKENS = 500000
 
-fold emit_tok(toks, kind, text, n) {
+fold emit_tok(toks, kind, text, n, offset) {
     when len(toks) >= MAX_TOKENS {
         say("oric: too many tokens (>" + str(MAX_TOKENS) + ") — source file may be machine-generated or malformed")
         give toks
     }
-    push(toks, [kind, text, n])
+    push(toks, [kind, text, offset])
     LAST_KIND = kind
     LAST_TEXT = text
     when kind == TK_SYM {
@@ -135,14 +136,16 @@ fold tokenize(src) {
     LAST_KIND = 0 - 1
     LAST_TEXT = ""
     DEPTH = 0
+    hold line = 1
     loop i < n {
         hold c = char_at(src, i)
         when c == chr(10) {
+            line = line + 1
             hold suppress = DEPTH > 0
             when !suppress {
                 when nl_is_continuation() { suppress = yes }
             }
-            when !suppress { emit_tok(toks, TK_NL, "", 0) }
+            when !suppress { emit_tok(toks, TK_NL, "", 0, i) }
             i = i + 1
         } else when is_space(c) {
             i = i + 1
@@ -162,14 +165,15 @@ fold tokenize(src) {
                 }
             }
             hold numtext = substr(src, s0, i - s0)
-            emit_tok(toks, TK_NUM, numtext, num(numtext))
+            emit_tok(toks, TK_NUM, numtext, num(numtext), s0)
         } else when is_alpha(c) {
             hold s1 = i
             loop i < n && is_ident(char_at(src, i)) {
                 i = i + 1
             }
-            emit_tok(toks, TK_IDENT, substr(src, s1, i - s1), 0)
+            emit_tok(toks, TK_IDENT, substr(src, s1, i - s1), 0, s1)
         } else when c == "\"" {
+            hold str_start = i
             i = i + 1
             hold sparts = []
             loop i < n && char_at(src, i) != "\"" {
@@ -187,30 +191,53 @@ fold tokenize(src) {
                     i = i + 1
                 }
             }
-            when i >= n { print("oric: unterminated string literal") }
+            when i >= n { say("oric: unterminated string literal starting at line " + str(line)) }
             i = i + 1
-            emit_tok(toks, TK_STR, str_join(sparts, ""), 0)
+            emit_tok(toks, TK_STR, str_join(sparts, ""), 0, str_start)
         } else {
             hold two = substr(src, i, 2)
             when two == "==" || two == "!=" || two == "<=" || two == ">=" || two == "&&" || two == "||" {
-                emit_tok(toks, TK_SYM, two, 0)
+                emit_tok(toks, TK_SYM, two, 0, i)
                 i = i + 2
             } else {
-                emit_tok(toks, TK_SYM, substr(src, i, 1), 0)
+                emit_tok(toks, TK_SYM, substr(src, i, 1), 0, i)
                 i = i + 1
             }
         }
     }
-    emit_tok(toks, TK_EOF, "", 0)
+    emit_tok(toks, TK_EOF, "", 0, n)
     give toks
 }
 
 // ---------------------------------------------------------------------------
 //  Parser
 // ---------------------------------------------------------------------------
+// Compute line number at token position (for error spans)
+fold p_line() {
+    hold offset = P_toks[P_pos][2]  // byte offset stored in token
+    when offset <= 0 || offset > len(P_SRC) { give 0 }
+    hold ln = 1
+    hold i = 0
+    loop i < offset {
+        when char_at(P_SRC, i) == chr(10) { ln = ln + 1 }
+        i = i + 1
+    }
+    give ln
+}
+fold p_col() {
+    hold offset = P_toks[P_pos][2]
+    when offset <= 0 || offset > len(P_SRC) { give 0 }
+    hold col = 1
+    hold i = offset - 1
+    loop i >= 0 && char_at(P_SRC, i) != chr(10) {
+        col = col + 1
+        i = i - 1
+    }
+    give col
+}
 fold p_kind() { give P_toks[P_pos][0] }
 fold p_text() { give P_toks[P_pos][1] }
-fold p_num() { give P_toks[P_pos][2] }
+fold p_num() { give num(P_toks[P_pos][1]) }
 fold p_advance() {
     hold t = P_toks[P_pos]
     when P_pos < len(P_toks) - 1 { P_pos = P_pos + 1 }
@@ -221,7 +248,7 @@ fold p_check_sym(s) {
 }
 fold p_eat_sym(s) {
     when p_check_sym(s) { give p_advance() }
-    say("parse error: expected '" + s + "' but found '" + p_text() + "'")
+    say("parse error at line " + str(p_line()) + ", col " + str(p_col()) + ": expected '" + s + "' but found '" + p_text() + "'")
     give p_advance()
 }
 fold p_skip_nl() {
@@ -300,6 +327,7 @@ fold starts_arg() {
 fold parse(src) {
     P_toks = tokenize(src)
     P_pos = 0
+    P_SRC = src
     P_FNAMES = []
     P_FARITY = []
     p_register_builtins()
@@ -564,7 +592,7 @@ fold parse_primary() {
         p_eat_sym("]")
         give [N_ARRAY, elems]
     }
-    say("parse error: unexpected token '" + p_text() + "'")
+    say("parse error at line " + str(p_line()) + ", col " + str(p_col()) + ": unexpected token '" + p_text() + "'")
     p_advance()
     give [N_NUM, 0]
 }
