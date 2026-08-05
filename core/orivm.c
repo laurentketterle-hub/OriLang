@@ -668,6 +668,103 @@ static Value h_max(VM* vm, Value* a, int argc){ if(argc==0)return vnil(); double
 static Value h_min(VM* vm, Value* a, int argc){ if(argc==0)return vnil(); double m=argnum(a,argc,0); for(int i=1;i<argc;i++){double x=argnum(a,argc,i); if(x<m)m=x;} return vnum(m); }
 static Value h_upper(VM* vm, Value* a, int argc){ Str* s=argstr(a,argc,0); Value v=vstr_n(s->d,s->len); for(int i=0;i<v.u.s->len;i++){char c=v.u.s->d[i]; if(c>='a'&&c<='z')v.u.s->d[i]=c-32;} return v; }
 static Value h_lower(VM* vm, Value* a, int argc){ Str* s=argstr(a,argc,0); Value v=vstr_n(s->d,s->len); for(int i=0;i<v.u.s->len;i++){char c=v.u.s->d[i]; if(c>='A'&&c<='Z')v.u.s->d[i]=c+32;} return v; }
+/* ---- stdlib string helpers (#33) ---- */
+static Value h_trim(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); int start=0, end=s->len;
+    while(start<end && (s->d[start]==' '||s->d[start]=='\t'||s->d[start]=='\n'||s->d[start]=='\r')) start++;
+    while(end>start && (s->d[end-1]==' '||s->d[end-1]=='\t'||s->d[end-1]=='\n'||s->d[end-1]=='\r')) end--;
+    return vstr_n(s->d+start, end-start);
+}
+
+static Value h_trim_start(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); int start=0, end=s->len;
+    while(start<end && (s->d[start]==' '||s->d[start]=='\t'||s->d[start]=='\n'||s->d[start]=='\r')) start++;
+    return vstr_n(s->d+start, end-start);
+}
+
+static Value h_trim_end(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); int start=0, end=s->len;
+    while(end>start && (s->d[end-1]==' '||s->d[end-1]=='\t'||s->d[end-1]=='\n'||s->d[end-1]=='\r')) end--;
+    return vstr_n(s->d+start, end-start);
+}
+
+static Value h_split(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* delim=argstr(a,argc,1);
+    Value arr=varr_new();
+    if(delim->len==0){ for(int i=0;i<s->len;i++) arr_push(arr.u.a,vstr_n(s->d+i,1)); return arr; }
+    int start=0;
+    for(int i=0;i<=s->len;i++){
+        if(i+delim->len<=s->len && memcmp(s->d+i, delim->d, delim->len)==0){
+            arr_push(arr.u.a, vstr_n(s->d+start, i-start));
+            i+=delim->len-1; start=i+1;
+        }
+    }
+    arr_push(arr.u.a, vstr_n(s->d+start, s->len-start));
+    return arr;
+}
+
+static Value h_starts_with(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* prefix=argstr(a,argc,1);
+    if(prefix->len>s->len) return vbool(0);
+    return vbool(memcmp(s->d, prefix->d, prefix->len)==0);
+}
+
+static Value h_ends_with(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* suffix=argstr(a,argc,1);
+    if(suffix->len>s->len) return vbool(0);
+    return vbool(memcmp(s->d+s->len-suffix->len, suffix->d, suffix->len)==0);
+}
+
+static Value h_replace(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* from=argstr(a,argc,1); Str* to=argstr(a,argc,2);
+    if(from->len==0) return vstr_n(s->d, s->len);
+    Sb sb; sb_init(&sb);
+    int i=0;
+    while(i<s->len){
+        if(i+from->len<=s->len && memcmp(s->d+i, from->d, from->len)==0){
+            sb_put(&sb, to->d, to->len);
+            i+=from->len;
+        } else {
+            sb_putc(&sb, s->d[i]);
+            i++;
+        }
+    }
+    Value v=vstr_n(sb.d, sb.len); free(sb.d); return v;
+}
+
+static Value h_contains(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* sub=argstr(a,argc,1);
+    if(sub->len==0) return vbool(1);
+    for(int i=0;i+sub->len<=s->len;i++)
+        if(memcmp(s->d+i, sub->d, sub->len)==0) return vbool(1);
+    return vbool(0);
+}
+
+static Value h_repeat_str(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); int n=safe_int(argnum(a,argc,1));
+    if(n<0) n=0; if(n>1000000) rt_error("repeat: count too large (>1M)");
+    Sb sb; sb_init(&sb);
+    for(int i=0;i<n;i++) sb_put(&sb, s->d, s->len);
+    Value v=vstr_n(sb.d, sb.len); free(sb.d); return v;
+}
+
+static Value h_index_of(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Str* sub=argstr(a,argc,1);
+    if(sub->len==0) return vnum(0);
+    for(int i=0;i+sub->len<=s->len;i++)
+        if(memcmp(s->d+i, sub->d, sub->len)==0) return vnum(i);
+    return vnum(-1);
+}
+
+static Value h_reverse_str(VM* vm, Value* a, int argc){
+    Str* s=argstr(a,argc,0); Value v=vstr_n(s->d,s->len);
+    for(int i=0;i<v.u.s->len/2;i++){
+        char t=v.u.s->d[i];
+        v.u.s->d[i]=v.u.s->d[v.u.s->len-1-i];
+        v.u.s->d[v.u.s->len-1-i]=t;
+    }
+    return v;
+}
 
 /* Returns 1 if path contains a ".." component — catches /../ ..\ leading ../ etc. */
 static int has_dotdot(const char* path){
@@ -1545,13 +1642,13 @@ static Value h_str_join(VM* vm, Value* a, int argc){
 static void register_hosts(VM* vm){
     static const char* names[] = {
         "say","print","str","num","len","push","pop","char_at","ord","chr","substr","str_join","type",
-        "abs","floor","sqrt","max","min","upper","lower",
+        "abs","floor","sqrt","max","min","upper","lower","trim","trim_start","trim_end","split","starts_with","ends_with","replace","contains","repeat","index_of","reverse",
         "read_file","write_bytes","write_file","argc","argv",
         "env","exists","sh","run","mkdirs","copy","glob","abspath",
         "is_dir","mtime","sleep_ms","read_bytes_b64","http_get","http_post","http_serve","json_get_str","json_get_num","json_escape","json_parse_arr","http_put","http_delete","store_next_id","store_set","store_get","store_delete","store_list","db_connect","db_exec","db_query","db_escape","db_last_id","db_error","db_close" };
     static HostFn fns[] = {
         h_say,h_say,h_str,h_num,h_len,h_push,h_pop,h_char_at,h_ord,h_chr,h_substr,h_str_join,h_type,
-        h_abs,h_floor,h_sqrt,h_max,h_min,h_upper,h_lower,
+        h_abs,h_floor,h_sqrt,h_max,h_min,h_upper,h_lower,h_trim,h_trim_start,h_trim_end,h_split,h_starts_with,h_ends_with,h_replace,h_contains,h_repeat_str,h_index_of,h_reverse_str,
         h_read_file,h_write_bytes,h_write_file,h_argc,h_argv,
         h_env,h_exists,h_sh,h_run,h_mkdirs,h_copy,h_glob,h_abspath,
         h_is_dir,h_mtime,h_sleep_ms,h_read_bytes_b64,h_http_get,h_http_post,h_http_serve,h_json_get_str,h_json_get_num,h_json_escape,h_json_parse_arr,h_http_put,h_http_delete,h_store_next_id,h_store_set,h_store_get,h_store_delete,h_store_list,h_db_connect,h_db_exec,h_db_query,h_db_escape,h_db_last_id,h_db_error,h_db_close };

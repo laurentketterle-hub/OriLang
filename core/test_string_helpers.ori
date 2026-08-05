@@ -1,0 +1,114 @@
+// stdlib string helpers tests (#33)
+
+// --- trim ---
+hold t1 = trim("  hello  ")
+when t1 == "hello" {
+    say "trim: PASS"
+} otherwise {
+    say "trim: FAIL - got: " + t1
+}
+
+// --- trim_start ---
+hold t2 = trim_start("  hello  ")
+when t2 == "hello  " {
+    say "trim_start: PASS"
+} otherwise {
+    say "trim_start: FAIL - got: " + t2
+}
+
+// --- trim_end ---
+hold t3 = trim_end("  hello  ")
+when t3 == "  hello" {
+    say "trim_end: PASS"
+} otherwise {
+    say "trim_end: FAIL - got: " + t3
+}
+
+// --- split ---
+hold sp = split("a,b,c", ",")
+when (len sp) == 3 {
+    when sp[0] == "a" {
+        when sp[1] == "b" {
+            when sp[2] == "c" {
+                say "split: PASS"
+            }
+        }
+    }
+} otherwise {
+    say "split: FAIL"
+}
+
+// --- starts_with ---
+when starts_with("hello world", "hello") {
+    say "starts_with 1: PASS"
+} otherwise {
+    say "starts_with 1: FAIL"
+}
+when not (starts_with("hello world", "world")) {
+    say "starts_with 2: PASS"
+} otherwise {
+    say "starts_with 2: FAIL"
+}
+
+// --- ends_with ---
+when ends_with("hello world", "world") {
+    say "ends_with 1: PASS"
+} otherwise {
+    say "ends_with 1: FAIL"
+}
+when not (ends_with("hello world", "hello")) {
+    say "ends_with 2: PASS"
+} otherwise {
+    say "ends_with 2: FAIL"
+}
+
+// --- replace ---
+hold r1 = replace("hello world", "world", "Ori")
+when r1 == "hello Ori" {
+    say "replace: PASS"
+} otherwise {
+    say "replace: FAIL - got: " + r1
+}
+
+// --- contains ---
+when contains("hello world", "lo wo") {
+    say "contains 1: PASS"
+} otherwise {
+    say "contains 1: FAIL"
+}
+when not (contains("hello world", "xyz")) {
+    say "contains 2: PASS"
+} otherwise {
+    say "contains 2: FAIL"
+}
+
+// --- repeat ---
+hold rp = repeat("ha", 3)
+when rp == "hahaha" {
+    say "repeat: PASS"
+} otherwise {
+    say "repeat: FAIL - got: " + rp
+}
+
+// --- index_of ---
+hold idx = index_of("hello world", "world")
+when idx == 6 {
+    say "index_of 1: PASS"
+} otherwise {
+    say "index_of 1: FAIL - got: " + (str idx)
+}
+when (index_of("hello", "x")) == -1 {
+    say "index_of 2: PASS"
+} otherwise {
+    say "index_of 2: FAIL"
+}
+
+// --- reverse ---
+hold rev = reverse("abc")
+when rev == "cba" {
+    say "reverse: PASS"
+} otherwise {
+    say "reverse: FAIL - got: " + rev
+}
+
+say "All string helper tests completed!"
