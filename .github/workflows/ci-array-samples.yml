@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: for f in samples/array_*.ori; do echo "===  ==="; cat ""; done
+      - run: for f in samples/array_*.ori; do echo "=== $f ==="; cat "$f"; done
