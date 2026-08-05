@@ -199,24 +199,72 @@ fold compile_orb proj m_entry proj_name {
 // ===== DOCTOR =====
 fold cmd_doctor {
     say("ori doctor  (toolchain 0.9.1)")
-    when exists(VM_EXE) { say("  [ok] native VM      " + VM_EXE) }
+    hold ok_count = 0
+    hold warn_count = 0
+
+    // 1. Native VM
+    when exists(VM_EXE) { say("  [ok] native VM      " + VM_EXE); ok_count = ok_count + 1 }
     else {
         say("  [!!] native VM missing: " + VM_EXE)
         say("       Run build.cmd (Windows) or sh build.sh first.")
         give 1
     }
-    when exists(COMPILER) { say("  [ok] Ori compiler   tools/oric.orb (self-hosted)") }
+
+    // 2. Compiler
+    when exists(COMPILER) { say("  [ok] Ori compiler   tools/oric.orb (self-hosted)"); ok_count = ok_count + 1 }
     else {
         say("  [!!] Ori compiler missing: " + COMPILER)
         give 1
     }
+
+    // 3. CLI image
+    hold cli_orb = jp(TOOLS, "ori.orb")
+    when exists(cli_orb) { say("  [ok] ori CLI image  tools/ori.orb"); ok_count = ok_count + 1 }
+    else { say("  [!!] ori CLI image  missing: " + cli_orb); warn_count = warn_count + 1 }
+
+    // 4. Web runtime
     hold wasm = jp(TOOLS_WEB, "orivm.wasm")
-    when exists(wasm) { say("  [ok] web runtime    tools/web/orivm.wasm") }
-    else { say("  [..] web runtime    not built (only for `ori run` on web platform)") }
+    when exists(wasm) { say("  [ok] web runtime    tools/web/orivm.wasm"); ok_count = ok_count + 1 }
+    else { say("  [..] web runtime    not built (only for `ori run` on web platform)"); warn_count = warn_count + 1 }
+
+    // 5. Stdlib fixture
     hold stdlib = jp(jp(HOME, "core"), "test_stdlib_basics.ori")
-    when exists(stdlib) { say("  [ok] stdlib fixture core/test_stdlib_basics.ori") }
-    else { say("  [..] stdlib fixture not present") }
-    say("  Toolchain ready.  Try: ori version")
+    when exists(stdlib) { say("  [ok] stdlib fixture core/test_stdlib_basics.ori"); ok_count = ok_count + 1 }
+    else { say("  [..] stdlib fixture not present"); warn_count = warn_count + 1 }
+
+    // 6. Build scripts
+    hold build_sh = jp(HOME, "build.sh")
+    when exists(build_sh) { say("  [ok] build script   build.sh"); ok_count = ok_count + 1 }
+    else { say("  [..] build.sh missing"); warn_count = warn_count + 1 }
+
+    // 7. Samples directory
+    hold sample = jp(jp(HOME, "samples"), "beginner_01_hello.ori")
+    when exists(sample) { say("  [ok] samples dir    samples/ (beginner_01_hello.ori found)"); ok_count = ok_count + 1 }
+    else { say("  [..] samples directory empty or missing"); warn_count = warn_count + 1 }
+
+    // 8. Platform directories
+    hold linux_readme = jp(jp(jp(HOME, "platforms"), "linux"), "README.md")
+    when exists(linux_readme) { say("  [ok] linux platform platforms/linux/"); ok_count = ok_count + 1 }
+    else { say("  [..] linux platform README missing"); warn_count = warn_count + 1 }
+
+    hold web_readme = jp(jp(jp(HOME, "platforms"), "web"), "README.md")
+    when exists(web_readme) { say("  [ok] web platform   platforms/web/"); ok_count = ok_count + 1 }
+    else { say("  [..] web platform README missing"); warn_count = warn_count + 1 }
+
+    // 9. Documentation
+    hold docs = jp(HOME, "docs/cheatsheet.md")
+    when exists(docs) { say("  [ok] docs           docs/cheatsheet.md"); ok_count = ok_count + 1 }
+    else { say("  [..] docs directory incomplete"); warn_count = warn_count + 1 }
+
+    // Summary
+    say("  ---")
+    say("  Checks: " + ok_count + " ok, " + warn_count + " warnings")
+    when warn_count == 0 {
+        say("  Toolchain ready.  Try: ori version")
+    } else {
+        say("  Toolchain mostly ready.  Some optional components missing.")
+        say("  Run: sh build.sh to rebuild missing components.")
+    }
     give 0
 }
 
