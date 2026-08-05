@@ -1,0 +1,15 @@
+hold name = "orilang"
+hold version = "0.9.0"
+hold description = "Ori language runtime and compiler"
+
+hold main = "tools/oric.ori"
+hold tools = ["tools/ori.ori" "tools/pkg/loader.ori"]
+
+hold minimum_vm = "0.9.0"
+hold platforms = ["linux" "windows" "wasm"]
+
+hold dependencies = [
+]
+
+hold authors = ["ThanhTrucSolutions"]
+hold license = "MIT"

@@ -1,0 +1,136 @@
+// ============================================================================
+//  loader.ori — Ori package manifest loader stub (#36)
+//
+//  Reads an ori.pkg manifest, resolves dependencies, and returns a module
+//  map that the compiler or runtime can query.
+//
+//  Usage:  orivm tools/pkg/loader.ori  <path/to/ori.pkg>
+// ============================================================================
+
+// ---- Semver helpers ----
+hold semver_parts = fold ver (
+    hold parts = split(ver ".")
+    hold maj = num(parts[0])
+    hold min = num(parts[1])
+    hold pat = num(parts[2])
+    give [maj min pat]
+)
+
+hold semver_cmp = fold a b (
+    hold ap = semver_parts(a)
+    hold bp = semver_parts(b)
+    // return -1/0/1
+    when ap[0] < bp[0] give -1
+    when ap[0] > bp[0] give 1
+    when ap[1] < bp[1] give -1
+    when ap[1] > bp[1] give 1
+    when ap[2] < bp[2] give -1
+    when ap[2] > bp[2] give 1
+    give 0
+)
+
+hold version_satisfies = fold version constraint (
+    when constraint = "all" give yes
+    when startswith(constraint ">=") (
+        hold min_ver = trim(constraint 2)
+        give semver_cmp(version min_ver) >= 0
+    )
+    when startswith(constraint "<") (
+        hold max_ver = trim(constraint 1)
+        give semver_cmp(version max_ver) < 0
+    )
+    when startswith(constraint "=") (
+        hold exact = trim(constraint 1)
+        give semver_cmp(version exact) = 0
+    )
+    give no
+)
+
+// ---- Manifest parsing ----
+hold parse_manifest = fold path (
+    hold raw = read_file(path)
+    hold lines = split(raw "\n")
+    hold pkg = new_map()
+    
+    each lines ? line (
+        hold trimmed = trim(line)
+        when trimmed = "" give none
+        when startswith(trimmed "//") give none
+        
+        // Simple key-value parsing
+        hold eqpos = find(trimmed "hold ")
+        when eqpos >= 0 (
+            hold rest = trim(trimmed 5)
+            hold space = find(rest " = ")
+            when space > 0 (
+                hold key = trim(rest 0 space)
+                hold val = trim(rest space + 3)
+                set_map(pkg key val)
+            )
+        )
+    )
+    give pkg
+)
+
+// ---- Dependency resolution ----
+hold resolve_deps = fold pkg (
+    hold deps_str = get_map(pkg "dependencies")
+    when deps_str = "" give []
+    
+    // Stub: return empty dep list for now
+    // Full resolver with registry lookup ships in follow-up bounty
+    hold deps = []
+    
+    // Parse dependency entries from string
+    hold entries = split(deps_str "[")
+    each entries ? entry (
+        when entry = "" give none
+        when entry = "]" give none
+        hold clean = trim(entry " ]")
+        hold parts = split(clean " ")
+        when len(parts) >= 2 (
+            hold name = parts[0]
+            hold range = parts[1]
+            hold url = ""
+            when len(parts) >= 3 (hold url = parts[2])
+            hold dep = new_map()
+            set_map(dep "name" name)
+            set_map(dep "range" range)
+            set_map(dep "url" url)
+            set_map(dep "version" "0.0.0")
+            push(deps dep)
+        )
+    )
+    give deps
+)
+
+// ---- Module loading ----
+hold load_modules = fold deps (
+    hold mods = new_map()
+    give mods  // stub
+)
+
+// ---- Entry point ----
+hold main = fold args (
+    when len(args) < 2 (
+        print("Usage: orivm tools/pkg/loader.ori <path/to/ori.pkg>")
+        give 1
+    )
+    
+    hold manifest_path = args[1]
+    hold pkg = parse_manifest(manifest_path)
+    
+    print("Package: " + get_map(pkg "name"))
+    print("Version: " + get_map(pkg "version"))
+    print("Main:    " + get_map(pkg "main"))
+    
+    hold deps = resolve_deps(pkg)
+    print("Deps:    " + len(deps) + " resolved")
+    
+    hold mods = load_modules(deps)
+    print("Modules: " + len(mods) + " loaded")
+    
+    give 0
+)
+
+main(args)

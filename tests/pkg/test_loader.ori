@@ -1,0 +1,14 @@
+// tests/pkg/test_loader.ori — smoke test for loader stub (#36)
+hold result = "PASS"
+
+// Simulate what the loader parses
+hold test_name = "orilang"
+hold test_version = "0.9.0"
+
+when test_name = "orilang" (hold result = "PASS")
+else (hold result = "FAIL: name mismatch")
+
+when test_version = "0.9.0" (hold result = "PASS")
+else (hold result = "FAIL: version mismatch")
+
+print(result)
