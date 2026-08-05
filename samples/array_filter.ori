@@ -1,0 +1,23 @@
+// Array filter sample — keep only even numbers
+// Demonstrates idiomatic filter pattern in OriLang
+
+hold src = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+hold dst = []
+hold i = 0
+hold n = len src
+
+loop i < n {
+    hold val = src[i]
+    when val % 2 == 0 {
+        push(dst, val)
+    }
+    hold i = i + 1
+}
+
+// Print results
+hold j = 0
+hold m = len dst
+loop j < m {
+    say dst[j]
+    hold j = j + 1
+}

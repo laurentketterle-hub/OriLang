@@ -1,0 +1,37 @@
+// Array map + filter sample — keep evens, then double them
+// Demonstrates idiomatic chain: filter then map in OriLang
+
+hold src = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// Step 1: Filter — keep only even numbers
+hold filtered = []
+hold i = 0
+hold n = len src
+
+loop i < n {
+    hold val = src[i]
+    when val % 2 == 0 {
+        push(filtered, val)
+    }
+    hold i = i + 1
+}
+
+// Step 2: Map — double each filtered element
+hold mapped = []
+hold k = 0
+hold f_len = len filtered
+
+loop k < f_len {
+    hold val = filtered[k]
+    hold doubled = val * 2
+    push(mapped, doubled)
+    hold k = k + 1
+}
+
+// Print results
+hold j = 0
+hold m = len mapped
+loop j < m {
+    say mapped[j]
+    hold j = j + 1
+}

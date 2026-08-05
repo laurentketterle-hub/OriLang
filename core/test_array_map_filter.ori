@@ -1,0 +1,80 @@
+// Regression test: array map and filter patterns (run via orivm)
+// Tests the idiomatic map/filter samples from issue #35
+
+// Test 1: Map — double each element
+hold src1 = [1, 2, 3, 4, 5]
+hold dst1 = []
+hold i1 = 0
+hold n1 = len src1
+loop i1 < n1 {
+    hold v = src1[i1]
+    push(dst1, v * 2)
+    hold i1 = i1 + 1
+}
+// Verify: [2, 4, 6, 8, 10]
+when dst1[0] == 2 {
+    when dst1[1] == 4 {
+        when dst1[2] == 6 {
+            when dst1[3] == 8 {
+                when dst1[4] == 10 {
+                    when len dst1 == 5 {
+                        say "map_ok"
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Test 2: Filter — keep only evens
+hold src2 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+hold dst2 = []
+hold i2 = 0
+hold n2 = len src2
+loop i2 < n2 {
+    hold v = src2[i2]
+    when v % 2 == 0 {
+        push(dst2, v)
+    }
+    hold i2 = i2 + 1
+}
+// Verify: [2, 4, 6, 8, 10], length 5
+when dst2[0] == 2 {
+    when dst2[4] == 10 {
+        when len dst2 == 5 {
+            say "filter_ok"
+        }
+    }
+}
+
+// Test 3: Map + Filter chain
+hold src3 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+hold filtered3 = []
+hold i3 = 0
+hold n3 = len src3
+loop i3 < n3 {
+    hold v = src3[i3]
+    when v % 2 == 0 {
+        push(filtered3, v)
+    }
+    hold i3 = i3 + 1
+}
+hold mapped3 = []
+hold k3 = 0
+hold f_len3 = len filtered3
+loop k3 < f_len3 {
+    hold v = filtered3[k3]
+    push(mapped3, v * 2)
+    hold k3 = k3 + 1
+}
+// Verify: [4, 8, 12, 16, 20], length 5
+when mapped3[0] == 4 {
+    when mapped3[4] == 20 {
+        when len mapped3 == 5 {
+            say "chain_ok"
+        }
+    }
+}
+
+say "array_map_filter_all_ok"
+give 0
