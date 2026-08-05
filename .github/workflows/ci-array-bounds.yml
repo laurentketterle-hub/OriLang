@@ -1,0 +1,14 @@
+name: Array Bounds CI
+on:
+  push:
+    branches: [main, "feature/array-bounds*"]
+    paths: ["samples/array_bounds.ori", "samples/array_safe.ori", ".github/workflows/ci-array-bounds.yml"]
+  pull_request:
+    paths: ["samples/array_bounds.ori", "samples/array_safe.ori", ".github/workflows/ci-array-bounds.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: for f in samples/array_bounds.ori samples/array_safe.ori; do echo "File: "; cat ""; done
