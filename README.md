@@ -5,6 +5,7 @@
 [![Self-hosting](https://img.shields.io/badge/compiler-self--hosting%20Ori-5319E7.svg)](tools/oric.ori)
 [![MergeOS](https://img.shields.io/badge/MergeOS-bounties-5319E7.svg)](https://github.com/mergeos-bounties)
 
+[![Self-Host Fixpoint](https://github.com/ThanhTrucSolutions/OriLang/actions/workflows/self-host-check.yml/badge.svg)](https://github.com/ThanhTrucSolutions/OriLang/actions/workflows/self-host-check.yml)
 **Ori** es un lenguaje de programación pequeño y sin paréntesis obligatorios, con una **máquina virtual escrita en C**, un **compilador escrito en Ori** (autosuficiente) y una **CLI escrita en Ori** que se ejecuta sobre la VM. No depende de .NET, JVM ni otras plataformas externas — solo C y Ori.
 
 | Repositorio | Rama por defecto |

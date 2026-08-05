@@ -1,0 +1,44 @@
+name: Self-Host Fixpoint Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/orivm.c'
+      - 'tools/oric.ori'
+      - 'tools/oric.orb'
+      - 'scripts/selfhost-check.sh'
+      - '.github/workflows/self-host-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/orivm.c'
+      - 'tools/oric.ori'
+      - 'tools/oric.orb'
+      - 'scripts/selfhost-check.sh'
+      - '.github/workflows/self-host-check.yml'
+  workflow_dispatch:
+
+jobs:
+  fixpoint:
+    name: Compiler Fixpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools (Linux)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc make
+
+      - name: Verify tools
+        run: |
+          gcc --version
+          echo "CC=$(which gcc)" >> "$GITHUB_ENV"
+
+      - name: Run selfhost fixpoint check
+        run: |
+          bash scripts/selfhost-check.sh
