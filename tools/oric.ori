@@ -103,12 +103,12 @@ fold is_space(c) {
 
 hold MAX_TOKENS = 500000
 
-fold emit_tok(toks, kind, text, n) {
+fold emit_tok(toks, kind, text, n, line, col) {
     when len(toks) >= MAX_TOKENS {
         say("oric: too many tokens (>" + str(MAX_TOKENS) + ") — source file may be machine-generated or malformed")
         give toks
     }
-    push(toks, [kind, text, n])
+    push(toks, [kind, text, n, line, col])
     LAST_KIND = kind
     LAST_TEXT = text
     when kind == TK_SYM {
@@ -132,6 +132,8 @@ fold tokenize(src) {
     hold toks = []
     hold n = len(src)
     hold i = 0
+    hold cur_line = 1
+    hold cur_col = 1
     LAST_KIND = 0 - 1
     LAST_TEXT = ""
     DEPTH = 0
@@ -142,15 +144,20 @@ fold tokenize(src) {
             when !suppress {
                 when nl_is_continuation() { suppress = yes }
             }
-            when !suppress { emit_tok(toks, TK_NL, "", 0) }
+            when !suppress { emit_tok(toks, TK_NL, "", 0, cur_line, cur_col) }
             i = i + 1
+            cur_line = cur_line + 1
+            cur_col = 1
         } else when is_space(c) {
             i = i + 1
+            cur_col = cur_col + 1
         } else when c == "/" && char_at(src, i + 1) == "/" {
             loop i < n && char_at(src, i) != chr(10) {
                 i = i + 1
             }
         } else when is_digit(c) {
+            hold tok_line = cur_line
+            hold tok_col = cur_col
             hold s0 = i
             loop i < n && is_digit(char_at(src, i)) {
                 i = i + 1
@@ -161,47 +168,67 @@ fold tokenize(src) {
                     i = i + 1
                 }
             }
+            cur_col = cur_col + (i - s0)
             hold numtext = substr(src, s0, i - s0)
-            emit_tok(toks, TK_NUM, numtext, num(numtext))
+            emit_tok(toks, TK_NUM, numtext, num(numtext), tok_line, tok_col)
         } else when is_alpha(c) {
+            hold tok_line = cur_line
+            hold tok_col = cur_col
             hold s1 = i
             loop i < n && is_ident(char_at(src, i)) {
                 i = i + 1
             }
-            emit_tok(toks, TK_IDENT, substr(src, s1, i - s1), 0)
+            cur_col = cur_col + (i - s1)
+            emit_tok(toks, TK_IDENT, substr(src, s1, i - s1), 0, tok_line, tok_col)
         } else when c == "\"" {
+            hold tok_line = cur_line
+            hold tok_col = cur_col
             i = i + 1
+            cur_col = cur_col + 1
             hold sparts = []
             loop i < n && char_at(src, i) != "\"" {
                 hold ch = char_at(src, i)
                 when ch == "\\" {
                     i = i + 1
+                    cur_col = cur_col + 1
                     hold e = char_at(src, i)
                     when e == "n" { push(sparts, chr(10)) }
                     else when e == "t" { push(sparts, chr(9)) }
                     else when e == "r" { push(sparts, chr(13)) }
                     else { push(sparts, e) }
                     i = i + 1
+                    cur_col = cur_col + 1
                 } else {
                     push(sparts, ch)
                     i = i + 1
+                    when ch == chr(10) {
+                        cur_line = cur_line + 1
+                        cur_col = 1
+                    } else {
+                        cur_col = cur_col + 1
+                    }
                 }
             }
             when i >= n { print("oric: unterminated string literal") }
             i = i + 1
-            emit_tok(toks, TK_STR, str_join(sparts, ""), 0)
+            cur_col = cur_col + 1
+            emit_tok(toks, TK_STR, str_join(sparts, ""), 0, tok_line, tok_col)
         } else {
+            hold tok_line = cur_line
+            hold tok_col = cur_col
             hold two = substr(src, i, 2)
             when two == "==" || two == "!=" || two == "<=" || two == ">=" || two == "&&" || two == "||" {
-                emit_tok(toks, TK_SYM, two, 0)
+                emit_tok(toks, TK_SYM, two, 0, tok_line, tok_col)
                 i = i + 2
+                cur_col = cur_col + 2
             } else {
-                emit_tok(toks, TK_SYM, substr(src, i, 1), 0)
+                emit_tok(toks, TK_SYM, substr(src, i, 1), 0, tok_line, tok_col)
                 i = i + 1
+                cur_col = cur_col + 1
             }
         }
     }
-    emit_tok(toks, TK_EOF, "", 0)
+    emit_tok(toks, TK_EOF, "", 0, cur_line, cur_col)
     give toks
 }
 
@@ -211,6 +238,8 @@ fold tokenize(src) {
 fold p_kind() { give P_toks[P_pos][0] }
 fold p_text() { give P_toks[P_pos][1] }
 fold p_num() { give P_toks[P_pos][2] }
+fold p_line() { give P_toks[P_pos][3] }
+fold p_col() { give P_toks[P_pos][4] }
 fold p_advance() {
     hold t = P_toks[P_pos]
     when P_pos < len(P_toks) - 1 { P_pos = P_pos + 1 }
@@ -221,7 +250,7 @@ fold p_check_sym(s) {
 }
 fold p_eat_sym(s) {
     when p_check_sym(s) { give p_advance() }
-    say("parse error: expected '" + s + "' but found '" + p_text() + "'")
+    say("parse error at line " + str(p_line()) + ", col " + str(p_col()) + ": expected '" + s + "' but found '" + p_text() + "'")
     give p_advance()
 }
 fold p_skip_nl() {
@@ -564,7 +593,7 @@ fold parse_primary() {
         p_eat_sym("]")
         give [N_ARRAY, elems]
     }
-    say("parse error: unexpected token '" + p_text() + "'")
+    say("parse error at line " + str(p_line()) + ", col " + str(p_col()) + ": unexpected token '" + p_text() + "'")
     p_advance()
     give [N_NUM, 0]
 }
