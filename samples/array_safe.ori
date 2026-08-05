@@ -1,0 +1,27 @@
+// Array safe access helpers
+fold safe_get arr idx default {
+  hold n = len arr
+  when idx >= 0 {
+    when idx < n { arr[idx] } else { default }
+  } else { default }
+}
+
+fold is_valid_idx arr idx {
+  hold n = len arr
+  when idx >= 0 { when idx < n { 1 } else { 0 } } else { 0 }
+}
+
+fold safe_set arr idx val {
+  hold n = len arr
+  when idx >= 0 {
+    when idx < n { hold arr[idx] = val; 1 } else { 0 }
+  } else { 0 }
+}
+
+// Demo
+hold xs = [10, 20, 30]
+say ("safe[1]: " + safe_get(xs, 1, -1))
+say ("safe[5]: " + safe_get(xs, 5, -1))
+say ("safe[-1]: " + safe_get(xs, -1, -1))
+say ("valid[2]: " + is_valid_idx(xs, 2))
+say ("valid[3]: " + is_valid_idx(xs, 3))
