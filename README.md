@@ -25,6 +25,7 @@
 - [Autosuficiencia y seguridad](#autosuficiencia-y-seguridad)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Resumen del lenguaje](#resumen-del-lenguaje)
+- [Ruta de aprendizaje para principiantes](#ruta-de-aprendizaje-para-principiantes)
 - [Diagramas](#diagramas)
 - [Limitaciones](#limitaciones)
 - [Bounties de MergeOS](#bounties-de-mergeos)
@@ -262,6 +263,19 @@ See [docs/CHEATSHEET.md](docs/CHEATSHEET.md) for a comprehensive language cheats
 | Array | `[1, 2, 3]` — `arr[i]` — `push(arr, v)` |
 | HTTP | `http_get "https://api.example.com/data"` |
 | Return | `give value` |
+
+---
+
+## Ruta de aprendizaje para principiantes
+
+¿Nuevo en OriLang? Sigue la [**Guía de aprendizaje paso a paso**](docs/LEARNING_PATH.md) —
+16 lecciones ordenadas con objetivos de aprendizaje, ejemplos ejecutables, ejercicios prácticos
+y solución de problemas. Cubre desde `say "Hola"` hasta funciones recursivas, arrays y
+peticiones HTTP.
+
+New to OriLang? Follow the [**Beginner Learning Path**](docs/LEARNING_PATH.md) —
+16 ordered lessons with learning goals, runnable samples, practice exercises, and
+troubleshooting — from `say "Hello"` to recursive functions, arrays, and HTTP requests.
 
 ---
 

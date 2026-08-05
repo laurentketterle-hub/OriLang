@@ -1,0 +1,22 @@
+// Array map sample — double each element
+// Demonstrates idiomatic map pattern in OriLang
+
+hold src = [1, 2, 3, 4, 5]
+hold dst = []
+hold i = 0
+hold n = len src
+
+loop i < n {
+    hold val = src[i]
+    hold doubled = val * 2
+    push(dst, doubled)
+    hold i = i + 1
+}
+
+// Print results
+hold j = 0
+hold m = len dst
+loop j < m {
+    say dst[j]
+    hold j = j + 1
+}

@@ -5,7 +5,14 @@
 
 set -e
 
-SAMPLES=("beginner_01_hello" "beginner_23_fizzbuzz" "beginner_24_factorial")
+SAMPLES=(
+    "beginner_01_hello"
+    "beginner_23_fizzbuzz"
+    "beginner_24_factorial"
+    "array_map"
+    "array_filter"
+    "array_map_filter"
+)
 RESULTS_DIR="tests/golden_results"
 PASS=0
 FAIL=0
