@@ -1,0 +1,15 @@
+fold map arr fn {
+  hold result = []
+  hold i = 0
+  hold n = len arr
+  loop i < n {
+    push(result, fn(arr[i]))
+    hold i = i + 1
+  }
+  result
+}
+
+hold numbers = [1, 2, 3, 4, 5]
+fold double x { x * 2 + 0 }
+hold doubled = map(numbers, double)
+say ("map: " + doubled[0] + " " + doubled[1] + " " + doubled[2])
