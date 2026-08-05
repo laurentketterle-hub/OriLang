@@ -1,0 +1,64 @@
+fold str_len s { len s }
+
+fold str_upper s {
+  hold result = ""
+  hold i = 0
+  hold n = len s
+  loop i < n {
+    hold ch = s[i]
+    hold code = ch + 0
+    when code >= 97 {
+      when code <= 122 { hold result = result + (code - 32) }
+      else { hold result = result + ch }
+    } else { hold result = result + ch }
+    hold i = i + 1
+  }
+  result
+}
+
+fold str_lower s {
+  hold result = ""
+  hold i = 0
+  hold n = len s
+  loop i < n {
+    hold ch = s[i]
+    hold code = ch + 0
+    when code >= 65 {
+      when code <= 90 { hold result = result + (code + 32) }
+      else { hold result = result + ch }
+    } else { hold result = result + ch }
+    hold i = i + 1
+  }
+  result
+}
+
+fold str_repeat s n {
+  hold result = ""
+  hold i = 0
+  loop i < n {
+    hold result = result + s
+    hold i = i + 1
+  }
+  result
+}
+
+fold str_starts s prefix {
+  hold sn = len s
+  hold pn = len prefix
+  when pn > sn { 0 } else {
+    hold i = 0
+    hold match = 1
+    loop i < pn {
+      when s[i] != prefix[i] { hold match = 0 }
+      hold i = i + 1
+    }
+    match
+  }
+}
+
+hold test = "Hello World"
+say ("len: " + str_len(test))
+say ("upper: " + str_upper(test))
+say ("lower: " + str_lower(test))
+say ("repeat: " + str_repeat("ha", 3))
+say ("starts Hello: " + str_starts(test, "Hello"))
