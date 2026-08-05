@@ -5,7 +5,7 @@
 
 set -e
 
-SAMPLES=("beginner_01_hello" "beginner_23_fizzbuzz" "beginner_24_factorial")
+SAMPLES=("beginner_01_hello" "beginner_23_fizzbuzz" "beginner_24_factorial" "beginner_27_even_odd" "beginner_28_absolute_diff" "beginner_29_double_value")
 RESULTS_DIR="tests/golden_results"
 PASS=0
 FAIL=0
