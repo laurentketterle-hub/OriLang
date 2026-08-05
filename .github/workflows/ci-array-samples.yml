@@ -1,0 +1,14 @@
+name: Array Samples CI
+on:
+  push:
+    branches: [main, "feature/array*"]
+    paths: ["samples/array_*.ori", ".github/workflows/ci-array-samples.yml"]
+  pull_request:
+    paths: ["samples/array_*.ori", ".github/workflows/ci-array-samples.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: for f in samples/array_*.ori; do echo "===  ==="; cat ""; done
