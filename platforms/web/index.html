@@ -5,11 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Ori on the Web</title>
 <style>
-  body { background:#181a20; color:#e6e9f0; font-family:'Segoe UI',sans-serif; padding:24px; }
-  h2 { margin:0 0 4px; }
-  #status { color:#9aa0aa; font-size:13px; margin-bottom:14px; }
-  pre { background:#0f1116; padding:14px; border-radius:8px; white-space:pre-wrap;
-        min-height:220px; font-size:13px; line-height:1.45; color:#c8cdd7; }
+  /* Base */
+  body { background:#181a20; color:#e6e9f0; font-family:'Segoe UI',sans-serif; padding:16px;
+         max-width:960px; margin:0 auto; }
+  h2 { margin:0 0 4px; font-size:clamp(18px,4vw,24px); }
+  #status { color:#9aa0aa; font-size:clamp(11px,2.5vw,13px); margin-bottom:14px; }
+  pre { background:#0f1116; padding:12px; border-radius:8px; white-space:pre-wrap;
+        min-height:180px; font-size:clamp(11px,2.5vw,13px); line-height:1.45; color:#c8cdd7;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* Mobile layout polish */
+  @media (max-width: 600px) {
+    body { padding:10px; }
+    pre { padding:10px; min-height:120px; border-radius:6px; }
+    h2 { margin-bottom:2px; }
+    #status { margin-bottom:10px; }
+  }
+  @media (min-width: 768px) {
+    body { padding:24px; }
+    pre { padding:16px 20px; min-height:220px; }
+  }
+  /* Touch-friendly: larger tap targets */
+  button, a, [role="button"] { min-height:44px; min-width:44px; }
+  /* Smooth scrolling and text rendering */
+  html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  body { -webkit-font-smoothing:antialiased; }
 </style>
 </head>
 <body>
