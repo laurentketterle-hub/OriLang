@@ -1,0 +1,14 @@
+name: String Helpers CI
+on:
+  push:
+    branches: [main, "feature/stdlib*"]
+    paths: ["samples/string_*.ori", ".github/workflows/ci-string-helpers.yml"]
+  pull_request:
+    paths: ["samples/string_*.ori", ".github/workflows/ci-string-helpers.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: for f in samples/string_*.ori; do echo "File: "; cat ""; done
