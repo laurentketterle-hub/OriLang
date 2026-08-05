@@ -1,0 +1,19 @@
+// Array bounds edge case reproducer
+hold empty = []
+say ("empty len: " + len empty)
+
+hold xs = [10, 20, 30]
+hold n = len xs
+say ("xs len: " + n)
+hold last = xs[n - 1]
+say ("last valid: " + last)
+
+// Push growth
+hold growing = [1]
+hold k = 2
+loop k <= 10 {
+  push(growing, k)
+  hold k = k + 1
+}
+say ("grown len: " + len growing)
+say ("grown last: " + growing[9])
