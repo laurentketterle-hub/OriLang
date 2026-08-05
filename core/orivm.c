@@ -1085,6 +1085,37 @@ static Value h_sleep_ms(VM* vm, Value* a, int argc){
 #endif
     return vnil();
 }
+
+// vm_stack_dump() — dump the current VM value stack for debugging
+static Value h_vm_stack_dump(VM* vm, Value* a, int argc){
+    (void)a; (void)argc;
+    fprintf(stderr, "=== VM STACK DUMP (sp=%d, cap=%d) ===
+", vm->sp, vm->stackCap);
+    for(int i = 0; i < vm->sp; i++){
+        Value v = vm->stack[i];
+        fprintf(stderr, "  [%d] ", i);
+        switch(v.t){
+            case V_NIL:  fprintf(stderr, "nil
+"); break;
+            case V_BOOL: fprintf(stderr, "bool: %s
+", v.u.b ? "true" : "false"); break;
+            case V_NUM:  fprintf(stderr, "num: %g
+", v.u.num); break;
+            case V_STR:  fprintf(stderr, "str(%d): "%s"
+", v.u.s->len, v.u.s->d); break;
+            case V_FUNC: fprintf(stderr, "func[%d]
+", v.u.i); break;
+            case V_HOST: fprintf(stderr, "host_fn[%d]
+", v.u.i); break;
+            default:     fprintf(stderr, "unknown type %d
+", v.t); break;
+        }
+    }
+    fprintf(stderr, "=== END VM STACK DUMP ===
+");
+    return vstr("ok");
+}
+
 static Value h_read_bytes_b64(VM* vm, Value* a, int argc){
     if(argc<1||a[0].t!=V_STR) return vstr("");
     if(has_dotdot(a[0].u.s->d)){ fprintf(stderr,"[Ori] read_bytes_b64: path traversal rejected\n"); return vstr(""); }
@@ -1548,13 +1579,13 @@ static void register_hosts(VM* vm){
         "abs","floor","sqrt","max","min","upper","lower",
         "read_file","write_bytes","write_file","argc","argv",
         "env","exists","sh","run","mkdirs","copy","glob","abspath",
-        "is_dir","mtime","sleep_ms","read_bytes_b64","http_get","http_post","http_serve","json_get_str","json_get_num","json_escape","json_parse_arr","http_put","http_delete","store_next_id","store_set","store_get","store_delete","store_list","db_connect","db_exec","db_query","db_escape","db_last_id","db_error","db_close" };
+        "is_dir","mtime","sleep_ms","read_bytes_b64","http_get","http_post","http_serve","json_get_str","json_get_num","json_escape","json_parse_arr","http_put","http_delete","vm_stack_dump","store_next_id","store_set","store_get","store_delete","store_list","db_connect","db_exec","db_query","db_escape","db_last_id","db_error","db_close" };
     static HostFn fns[] = {
         h_say,h_say,h_str,h_num,h_len,h_push,h_pop,h_char_at,h_ord,h_chr,h_substr,h_str_join,h_type,
         h_abs,h_floor,h_sqrt,h_max,h_min,h_upper,h_lower,
         h_read_file,h_write_bytes,h_write_file,h_argc,h_argv,
         h_env,h_exists,h_sh,h_run,h_mkdirs,h_copy,h_glob,h_abspath,
-        h_is_dir,h_mtime,h_sleep_ms,h_read_bytes_b64,h_http_get,h_http_post,h_http_serve,h_json_get_str,h_json_get_num,h_json_escape,h_json_parse_arr,h_http_put,h_http_delete,h_store_next_id,h_store_set,h_store_get,h_store_delete,h_store_list,h_db_connect,h_db_exec,h_db_query,h_db_escape,h_db_last_id,h_db_error,h_db_close };
+        h_is_dir,h_mtime,h_sleep_ms,h_read_bytes_b64,h_http_get,h_http_post,h_http_serve,h_json_get_str,h_json_get_num,h_json_escape,h_json_parse_arr,h_http_put,h_http_delete,h_vm_stack_dump,h_store_next_id,h_store_set,h_store_get,h_store_delete,h_store_list,h_db_connect,h_db_exec,h_db_query,h_db_escape,h_db_last_id,h_db_error,h_db_close };
     int n=(int)(sizeof(names)/sizeof(names[0]));
     vm->hostNames=names; vm->hostFns=fns; vm->hostCount=n;
     for(int i=0;i<n;i++) g_set(vm,names[i],vhost(i));
