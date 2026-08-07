@@ -1,0 +1,74 @@
+// loader.ori — Ori package manifest loader stub (#36)
+// Usage: orivm tools/pkg/loader.ori <path/to/ori.pkg>
+
+// ---- Semver helpers ----
+hold semver_parts = fold ver (
+    hold parts = split(ver ".")
+    hold maj = num(parts[0])
+    hold min = num(parts[1])
+    hold pat = num(parts[2])
+    give [maj min pat]
+)
+
+hold semver_cmp = fold a b (
+    hold ap = semver_parts(a)
+    hold bp = semver_parts(b)
+    when ap[0] < bp[0] give -1
+    when ap[0] > bp[0] give 1
+    when ap[1] < bp[1] give -1
+    when ap[1] > bp[1] give 1
+    when ap[2] < bp[2] give -1
+    when ap[2] > bp[2] give 1
+    give 0
+)
+
+// ---- Manifest parsing ----
+hold parse_manifest = fold path (
+    hold raw = read_file(path)
+    hold lines = split(raw "\n")
+    hold pkg = new_map()
+    each lines ? line (
+        hold trimmed = trim(line)
+        when trimmed = "" give none
+        when startswith(trimmed "//") give none
+        hold eqpos = find(trimmed "hold ")
+        when eqpos >= 0 (
+            hold rest = trim(trimmed 5)
+            hold space = find(rest " = ")
+            when space > 0 (
+                hold key = trim(rest 0 space)
+                hold val = trim(rest space + 3)
+                set_map(pkg key val)
+            )
+        )
+    )
+    give pkg
+)
+
+// ---- Dependency resolution (stub) ----
+hold resolve_deps = fold pkg (
+    give []  // Full resolver in follow-up bounty
+)
+
+// ---- Module loading (stub) ----
+hold load_modules = fold deps (
+    give new_map()
+)
+
+// ---- Entry point ----
+hold main = fold args (
+    when len(args) < 2 (
+        print("Usage: orivm tools/pkg/loader.ori <path/to/ori.pkg>")
+        give 1
+    )
+    hold manifest_path = args[1]
+    hold pkg = parse_manifest(manifest_path)
+    print("Package: " + get_map(pkg "name"))
+    print("Version: " + get_map(pkg "version"))
+    print("Main:    " + get_map(pkg "main"))
+    hold deps = resolve_deps(pkg)
+    print("Deps:    0 resolved (stub)")
+    give 0
+)
+
+main(args)

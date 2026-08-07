@@ -1,0 +1,28 @@
+name: CI-36 — Package Manifest + Loader Stub
+on:
+  push:
+    branches: [main]
+    paths: ['ori.pkg', 'tools/pkg/**', 'tests/pkg/**']
+  pull_request:
+    paths: ['ori.pkg', 'tools/pkg/**', 'tests/pkg/**']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check ori.pkg required fields
+        run: |
+          test -f ori.pkg || { echo "FAIL: ori.pkg missing"; exit 1; }
+          grep -q 'hold name' ori.pkg || { echo "FAIL: name missing"; exit 1; }
+          grep -q 'hold version' ori.pkg || { echo "FAIL: version missing"; exit 1; }
+          grep -q 'hold main' ori.pkg || { echo "FAIL: main missing"; exit 1; }
+          echo "PASS: required fields present"
+      - name: Verify loader stub
+        run: |
+          test -f tools/pkg/loader.ori || { echo "FAIL: loader missing"; exit 1; }
+          echo "PASS: loader stub present"
+      - name: Verify smoke test
+        run: |
+          test -f tests/pkg/test_loader.ori || { echo "FAIL: test missing"; exit 1; }
+          grep -q 'PASS' tests/pkg/test_loader.ori || { echo "FAIL: no assertion"; exit 1; }
+          echo "PASS: smoke test ready"
