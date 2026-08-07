@@ -1,0 +1,40 @@
+name: CI #12 – Self-host compiler fixpoint
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  fixpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build C VM (orivm)
+        run: cc -O2 -o core/orivm core/orivm.c -lm
+
+      - name: Verify oric.orb exists
+        run: test -f tools/oric.orb
+
+      - name: Stage-1 – compile oric.ori → oric1.orb
+        run: core/orivm tools/oric.orb tools/oric.ori tools/oric1.orb
+
+      - name: Stage-2 – recompile oric.ori → oric2.orb
+        run: core/orivm tools/oric1.orb tools/oric.ori tools/oric2.orb
+
+      - name: Fixpoint – oric1.orb ≡ oric2.orb (byte-exact)
+        run: |
+          if cmp -s tools/oric1.orb tools/oric2.orb; then
+            echo "✅ Fixpoint verified – byte-identical"
+          else
+            echo "❌ Fixpoint broken — oric1.orb ≠ oric2.orb"
+            xxd tools/oric1.orb > /tmp/a.hex
+            xxd tools/oric2.orb > /tmp/b.hex
+            diff /tmp/a.hex /tmp/b.hex || true
+            exit 1
+          fi
+
+      - name: Smoke — compile a sample
+        run: core/orivm tools/oric2.orb tests/test_arr.ori /tmp/t.orb
